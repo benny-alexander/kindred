@@ -3,15 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { format, parseISO, differenceInCalendarDays } from "date-fns";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { BookingForm } from "./booking-form";
+import { BookingEditDialog } from "./booking-edit-dialog";
 import { familyMeta, buildingMeta, type Booking } from "@/lib/bookings";
 
 function formatRange(start: string, end: string) {
@@ -73,21 +66,18 @@ export function BookingCard({ booking }: { booking: Booking }) {
         )}
 
         <div className="flex items-center gap-1 mt-4 -mx-2">
-          <Dialog open={editOpen} onOpenChange={setEditOpen}>
-            <DialogTrigger className="text-sm font-medium text-stone-600 hover:text-stone-900 px-2 py-1 rounded-md hover:bg-stone-50 transition">
-              Edit
-            </DialogTrigger>
-            <DialogContent className="max-w-md">
-              <DialogHeader>
-                <DialogTitle>Edit booking</DialogTitle>
-              </DialogHeader>
-              <BookingForm
-                existing={booking}
-                variant="modal"
-                onDone={() => setEditOpen(false)}
-              />
-            </DialogContent>
-          </Dialog>
+          <button
+            type="button"
+            onClick={() => setEditOpen(true)}
+            className="text-sm font-medium text-stone-600 hover:text-stone-900 px-2 py-1 rounded-md hover:bg-stone-50 transition"
+          >
+            Edit
+          </button>
+          <BookingEditDialog
+            booking={booking}
+            open={editOpen}
+            onOpenChange={setEditOpen}
+          />
           <span className="text-stone-300">·</span>
           <button
             type="button"
