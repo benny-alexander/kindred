@@ -69,7 +69,7 @@ export const BUILDINGS: BuildingMeta[] = [
     gradient: "from-amber-100 to-orange-50",
     blurb: "The main house",
     beds: "Queen + single fold-out",
-    bathroom: "Flushing toilet & shower",
+    bathroom: "No bathroom — use Tiny Home or Glider Room",
   },
   {
     value: "tiny_home",
