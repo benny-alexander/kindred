@@ -16,6 +16,7 @@ import {
   parseISO,
   startOfMonth,
   startOfWeek,
+  startOfDay,
   subMonths,
 } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -26,7 +27,12 @@ import {
 } from "@/lib/bookings";
 import { BookingEditDialog } from "./booking-edit-dialog";
 
-type Props = { bookings: Booking[] };
+type Props = {
+  bookings: Booking[];
+  selectedStart: string | null;
+  selectedEnd: string | null;
+  onSelect: (start: string | null, end: string | null) => void;
+};
 
 type PillLayout = {
   booking: Booking;
@@ -70,7 +76,16 @@ function layoutWeek(
   });
 }
 
-export function MonthCalendar({ bookings }: Props) {
+function toIso(d: Date) {
+  return format(d, "yyyy-MM-dd");
+}
+
+export function MonthCalendar({
+  bookings,
+  selectedStart,
+  selectedEnd,
+  onSelect,
+}: Props) {
   const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(new Date()));
   const [editing, setEditing] = useState<Booking | null>(null);
 
@@ -92,13 +107,28 @@ export function MonthCalendar({ bookings }: Props) {
     weeks.push({ start: wDays[0], end: wDays[6], days: wDays });
   }
 
-  const today = new Date();
+  const today = startOfDay(new Date());
   const onCurrentMonth = isSameMonth(visibleMonth, today);
   const weekdayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-  const bookingsInView = parsed.filter(
-    (b) => b.end >= gridStart && b.start <= gridEnd,
-  ).length;
+  const startDate = selectedStart ? parseISO(selectedStart) : null;
+  const endDate = selectedEnd ? parseISO(selectedEnd) : null;
+
+  function handleDayTap(day: Date) {
+    if (day < today) return;
+
+    if (!startDate || (startDate && endDate)) {
+      onSelect(toIso(day), null);
+      return;
+    }
+
+    if (day < startDate) {
+      onSelect(toIso(day), null);
+      return;
+    }
+
+    onSelect(toIso(startDate), toIso(day));
+  }
 
   return (
     <div>
@@ -154,34 +184,66 @@ export function MonthCalendar({ bookings }: Props) {
           return (
             <div
               key={wi}
-              className={`grid grid-cols-7 px-1 py-1 ${
+              className={`relative grid grid-cols-7 px-1 py-1 ${
                 wi > 0 ? "border-t border-stone-100" : ""
               }`}
               style={{
                 gridTemplateRows: `auto ${"minmax(1.5rem, auto) ".repeat(laneCount)}`.trim(),
+                minHeight: "3.25rem",
               }}
             >
               {week.days.map((d, di) => {
                 const outside = !isSameMonth(d, visibleMonth);
                 const isD = isToday(d);
+                const past = d < today;
+                const isStart = startDate && isSameDay(d, startDate);
+                const isEnd = endDate && isSameDay(d, endDate);
+                const inRange =
+                  startDate && endDate && d > startDate && d < endDate;
+                const isAnchor = isStart || isEnd;
+
                 return (
-                  <div
-                    key={di}
-                    style={{ gridColumn: di + 1, gridRow: 1 }}
-                    className="px-1.5 pt-1.5 pb-1"
+                  <button
+                    key={`bg-${di}`}
+                    type="button"
+                    onClick={() => handleDayTap(d)}
+                    disabled={past}
+                    aria-label={`Select ${format(d, "EEEE d MMMM")}`}
+                    style={{ gridColumn: di + 1, gridRow: "1 / -1" }}
+                    className={`relative z-0 group flex flex-col items-center pt-1.5 pb-1 transition ${
+                      past ? "cursor-default" : "cursor-pointer"
+                    } ${
+                      inRange
+                        ? "bg-stone-900/5"
+                        : isAnchor
+                          ? ""
+                          : past
+                            ? ""
+                            : "hover:bg-stone-50"
+                    } ${
+                      isStart && !isEnd
+                        ? "rounded-l-lg"
+                        : isStart
+                          ? "rounded-l-lg"
+                          : ""
+                    } ${isEnd ? "rounded-r-lg" : ""}`}
                   >
                     <span
-                      className={`inline-grid place-items-center text-xs sm:text-sm tabular-nums h-6 w-6 rounded-full ${
-                        isD
+                      className={`inline-grid place-items-center text-xs sm:text-sm tabular-nums h-6 w-6 rounded-full transition ${
+                        isAnchor
                           ? "bg-stone-900 text-white font-semibold"
-                          : outside
-                            ? "text-stone-300"
-                            : "text-stone-700"
+                          : isD
+                            ? "ring-1 ring-stone-900 text-stone-900 font-semibold"
+                            : outside
+                              ? "text-stone-300"
+                              : past
+                                ? "text-stone-400"
+                                : "text-stone-700"
                       }`}
                     >
                       {format(d, "d")}
                     </span>
-                  </div>
+                  </button>
                 );
               })}
 
@@ -192,7 +254,10 @@ export function MonthCalendar({ bookings }: Props) {
                   <button
                     type="button"
                     key={pi}
-                    onClick={() => setEditing(p.booking)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setEditing(p.booking);
+                    }}
                     title={`${f.label} · ${b.label} · ${format(
                       parseISO(p.booking.start_date),
                       "EEE d MMM",
@@ -201,7 +266,7 @@ export function MonthCalendar({ bookings }: Props) {
                       gridColumn: `${p.col} / span ${p.span}`,
                       gridRow: p.lane + 2,
                     }}
-                    className={`mx-0.5 my-0.5 h-6 sm:h-7 min-w-0 overflow-hidden flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 bg-gradient-to-r ${b.gradient} text-stone-900 text-[10px] sm:text-xs font-medium hover:brightness-95 transition ${
+                    className={`relative z-10 mx-0.5 my-0.5 h-6 sm:h-7 min-w-0 overflow-hidden flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 bg-gradient-to-r ${b.gradient} text-stone-900 text-[10px] sm:text-xs font-medium hover:brightness-95 transition ${
                       p.roundedLeft ? "rounded-l-full" : ""
                     } ${p.roundedRight ? "rounded-r-full" : ""}`}
                   >
@@ -225,12 +290,6 @@ export function MonthCalendar({ bookings }: Props) {
           );
         })}
       </div>
-
-      {bookingsInView === 0 && (
-        <p className="mt-4 text-center text-xs text-stone-400">
-          No stays this month.
-        </p>
-      )}
 
       {editing && (
         <BookingEditDialog

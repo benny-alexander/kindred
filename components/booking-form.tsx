@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -15,16 +15,32 @@ type Props = {
   existing?: Booking;
   onDone?: () => void;
   variant?: "page" | "modal";
+  initialStart?: string | null;
+  initialEnd?: string | null;
+  onAfterSubmit?: () => void;
 };
 
-export function BookingForm({ existing, onDone, variant = "page" }: Props) {
+export function BookingForm({
+  existing,
+  onDone,
+  variant = "page",
+  initialStart,
+  initialEnd,
+  onAfterSubmit,
+}: Props) {
   const router = useRouter();
   const [family, setFamily] = useState<Family | "">(existing?.family ?? "");
   const [building, setBuilding] = useState<Building | "">(existing?.building ?? "");
-  const [startDate, setStartDate] = useState(existing?.start_date ?? "");
-  const [endDate, setEndDate] = useState(existing?.end_date ?? "");
+  const [startDate, setStartDate] = useState(existing?.start_date ?? initialStart ?? "");
+  const [endDate, setEndDate] = useState(existing?.end_date ?? initialEnd ?? "");
   const [notes, setNotes] = useState(existing?.notes ?? "");
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (existing) return;
+    if (initialStart !== undefined) setStartDate(initialStart ?? "");
+    if (initialEnd !== undefined) setEndDate(initialEnd ?? "");
+  }, [existing, initialStart, initialEnd]);
 
   const canSubmit = family && building && startDate && endDate && !submitting;
 
@@ -58,6 +74,7 @@ export function BookingForm({ existing, onDone, variant = "page" }: Props) {
       setStartDate("");
       setEndDate("");
       setNotes("");
+      onAfterSubmit?.();
     }
     router.refresh();
     onDone?.();

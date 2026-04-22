@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { format, parseISO } from "date-fns";
+import { X } from "lucide-react";
 import { BookingCard } from "./booking-card";
 import { BookingForm } from "./booking-form";
 import { MonthCalendar } from "./month-calendar";
@@ -10,6 +12,25 @@ type View = "month" | "list";
 
 export function HomeView({ bookings }: { bookings: Booking[] }) {
   const [view, setView] = useState<View>("month");
+  const [selectedStart, setSelectedStart] = useState<string | null>(null);
+  const [selectedEnd, setSelectedEnd] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
+
+  function handleSelect(start: string | null, end: string | null) {
+    setSelectedStart(start);
+    setSelectedEnd(end);
+    if (start && end && formRef.current) {
+      formRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  function clearSelection() {
+    setSelectedStart(null);
+    setSelectedEnd(null);
+  }
+
+  const hasSelection = Boolean(selectedStart);
+  const fullRange = Boolean(selectedStart && selectedEnd);
 
   return (
     <>
@@ -53,7 +74,37 @@ export function HomeView({ bookings }: { bookings: Booking[] }) {
         </div>
 
         {view === "month" ? (
-          <MonthCalendar bookings={bookings} />
+          <>
+            <MonthCalendar
+              bookings={bookings}
+              selectedStart={selectedStart}
+              selectedEnd={selectedEnd}
+              onSelect={handleSelect}
+            />
+            <div className="mt-3 min-h-[2rem] flex items-center justify-center">
+              {hasSelection ? (
+                <div className="inline-flex items-center gap-2 rounded-full bg-stone-900 text-white px-4 py-1.5 text-xs sm:text-sm font-medium shadow-sm">
+                  <span>
+                    {fullRange
+                      ? `${format(parseISO(selectedStart!), "EEE d MMM")} → ${format(parseISO(selectedEnd!), "EEE d MMM")}`
+                      : `Arrive ${format(parseISO(selectedStart!), "EEE d MMM")} — now tap a leave date`}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearSelection}
+                    aria-label="Clear selection"
+                    className="hover:bg-white/15 rounded-full p-0.5 -mr-1.5 transition"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <p className="text-xs text-stone-400">
+                  Tap a day to start a booking
+                </p>
+              )}
+            </div>
+          </>
         ) : bookings.length > 0 ? (
           <div className="space-y-3">
             {bookings.map((b) => (
@@ -67,7 +118,7 @@ export function HomeView({ bookings }: { bookings: Booking[] }) {
         )}
       </section>
 
-      <section>
+      <section ref={formRef}>
         <div className="mb-6">
           <h2 className="font-serif text-3xl text-stone-900 tracking-tight">
             Book a stay
@@ -76,7 +127,11 @@ export function HomeView({ bookings }: { bookings: Booking[] }) {
             Takes about ten seconds.
           </p>
         </div>
-        <BookingForm />
+        <BookingForm
+          initialStart={selectedStart}
+          initialEnd={selectedEnd}
+          onAfterSubmit={clearSelection}
+        />
       </section>
     </>
   );
