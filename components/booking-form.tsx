@@ -108,9 +108,15 @@ export function BookingForm({ existing, onDone, variant = "page" }: Props) {
                 }`}
               >
                 <div className="text-3xl">{b.emoji}</div>
-                <div className="flex-1">
+                <div className="flex-1 min-w-0">
                   <div className="font-semibold text-stone-900">{b.label}</div>
                   <div className="text-sm text-stone-600">{b.blurb}</div>
+                  <div className="text-xs text-stone-600 mt-1.5 leading-snug">
+                    🛏 {b.beds}
+                  </div>
+                  <div className="text-xs text-stone-600 leading-snug">
+                    🚿 {b.bathroom}
+                  </div>
                 </div>
                 <div
                   className={`h-5 w-5 rounded-full border-2 transition ${

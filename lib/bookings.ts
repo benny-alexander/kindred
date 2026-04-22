@@ -57,6 +57,8 @@ export type BuildingMeta = {
   emoji: string;
   gradient: string;
   blurb: string;
+  beds: string;
+  bathroom: string;
 };
 
 export const BUILDINGS: BuildingMeta[] = [
@@ -66,6 +68,8 @@ export const BUILDINGS: BuildingMeta[] = [
     emoji: "🏡",
     gradient: "from-amber-100 to-orange-50",
     blurb: "The main house",
+    beds: "Queen + single fold-out",
+    bathroom: "Flushing toilet & shower",
   },
   {
     value: "tiny_home",
@@ -73,13 +77,17 @@ export const BUILDINGS: BuildingMeta[] = [
     emoji: "🛖",
     gradient: "from-emerald-100 to-lime-50",
     blurb: "Up the back",
+    beds: "Two doubles (or queen + fold-out double)",
+    bathroom: "Composting toilet, warm shower",
   },
   {
     value: "shed",
-    label: "The Shed",
+    label: "The Glider Room",
     emoji: "🏚️",
     gradient: "from-stone-200 to-stone-50",
-    blurb: "Cozy for two",
+    blurb: "Bunk space",
+    beds: "Lots of single mattresses",
+    bathroom: "Flushing toilet & shower",
   },
 ];
 
