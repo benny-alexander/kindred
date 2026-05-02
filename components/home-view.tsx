@@ -5,6 +5,7 @@ import { format, parseISO } from "date-fns";
 import { X } from "lucide-react";
 import { BookingCard } from "./booking-card";
 import { BookingForm } from "./booking-form";
+import { BookingEditDialog } from "./booking-edit-dialog";
 import { MonthCalendar } from "./month-calendar";
 import type { Booking } from "@/lib/bookings";
 
@@ -14,6 +15,7 @@ export function HomeView({ bookings }: { bookings: Booking[] }) {
   const [view, setView] = useState<View>("month");
   const [selectedStart, setSelectedStart] = useState<string | null>(null);
   const [selectedEnd, setSelectedEnd] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Booking | null>(null);
   const formRef = useRef<HTMLDivElement>(null);
 
   function handleSelect(start: string | null, end: string | null) {
@@ -80,6 +82,7 @@ export function HomeView({ bookings }: { bookings: Booking[] }) {
               selectedStart={selectedStart}
               selectedEnd={selectedEnd}
               onSelect={handleSelect}
+              onEdit={(b) => setEditing(b)}
             />
             <div className="mt-3 min-h-[2rem] flex items-center justify-center">
               {hasSelection ? (
@@ -108,7 +111,7 @@ export function HomeView({ bookings }: { bookings: Booking[] }) {
         ) : bookings.length > 0 ? (
           <div className="space-y-3">
             {bookings.map((b) => (
-              <BookingCard key={b.id} booking={b} />
+              <BookingCard key={b.id} booking={b} onEdit={setEditing} />
             ))}
           </div>
         ) : (
@@ -131,8 +134,20 @@ export function HomeView({ bookings }: { bookings: Booking[] }) {
           initialStart={selectedStart}
           initialEnd={selectedEnd}
           onAfterSubmit={clearSelection}
+          bookings={bookings}
         />
       </section>
+
+      {editing && (
+        <BookingEditDialog
+          booking={editing}
+          bookings={bookings}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setEditing(null);
+          }}
+        />
+      )}
     </>
   );
 }

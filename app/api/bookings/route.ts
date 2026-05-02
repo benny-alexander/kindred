@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
-import { familyLabel, buildingLabel, type Family, type Building } from "@/lib/bookings";
+import {
+  bookingDisplayName,
+  buildingLabel,
+  type Booking,
+  type Family,
+  type Building,
+} from "@/lib/bookings";
 
 export async function GET() {
   const today = new Date().toISOString().slice(0, 10);
@@ -21,6 +27,7 @@ export async function POST(req: Request) {
     start_date: string;
     end_date: string;
     notes?: string;
+    staying?: string | null;
   };
 
   const { data, error } = await supabase
@@ -31,6 +38,7 @@ export async function POST(req: Request) {
       start_date: body.start_date,
       end_date: body.end_date,
       notes: body.notes || null,
+      staying: body.staying?.trim() || null,
     })
     .select()
     .single();
@@ -39,14 +47,16 @@ export async function POST(req: Request) {
     if (error.code === "23P01") {
       const { data: conflict } = await supabase
         .from("bookings")
-        .select("family")
+        .select("family, staying")
         .eq("building", body.building)
         .lte("start_date", body.end_date)
         .gte("end_date", body.start_date)
         .limit(1)
         .single();
 
-      const who = conflict ? familyLabel(conflict.family as Family) : "someone";
+      const who = conflict
+        ? bookingDisplayName(conflict as Pick<Booking, "family" | "staying">)
+        : "someone";
       return NextResponse.json(
         { error: `${buildingLabel(body.building)} is already booked those dates by ${who}. Pick other dates or another building.` },
         { status: 409 },
