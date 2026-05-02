@@ -67,27 +67,55 @@ Multiple families can be there simultaneously in different buildings. One family
 
 ## Roadmap
 
-### Shipped today (v1)
+### Shipped v1
 - [x] Upcoming bookings list
 - [x] Book a stay (family, building, dates, notes)
 - [x] Edit & delete bookings
 - [x] Double-booking prevention
 - [x] Mobile-first layout
+- [x] Month calendar view + tap-to-select dates
 
-### Next up (once Tom + parents give feedback)
-- [ ] Notifications when a booking is made (email to all three families)
+### Shipped v1.1 (2026-05-02, Mum's feedback round)
+- [x] "Other" family tile with required name field — for Uncle Andrew etc.
+- [x] "Anyone else with you?" optional name field on family bookings (e.g. "+ Granny")
+- [x] Camping / Caravan as a 4th building (one party at a time)
+- [x] Live availability badges on building tiles once dates are picked
+- [x] Booking cards show real names ("Mum & Dad + Granny", "Uncle Andrew")
+- [x] Fix: edit-dialog freeze after delete (single shared dialog at page level)
+
+### Next up — waiting on Mum
+Decisions / content needed before the next push:
+
+- [ ] **Photos** — 2–4 per building (Shack, Tiny Home, Glider Room) + 1–2 farm-wide hero shots
+- [ ] **Tiny Home setup/packup doc** — PDF or Google Doc share link
+- [ ] **Tom's video URLs** (YouTube): Tiny setup, eucalyptus oil, nesting boxes, night vision
+- [ ] **Notifications** — email vs SMS, and who receives them (Mum & Dad only, or all six adults?)
+- [ ] **Family backend gate** — 4-digit PIN, or secret-ish URL like `/family-zk29`?
+- [ ] **Public site** go-ahead — vacancies management, public request form, requests inbox, then approve into a real booking
+- [ ] **Camping rule** — confirm one party at a time, or allow multiple campers/caravans simultaneously?
+
+### Backlog
 - [ ] Google Calendar sync so bookings show up in everyone's calendar
-- [ ] Custom domain (e.g. kindredretreat.com.au)
-- [ ] Visual polish — possibly a month calendar view
-- [ ] Photos of each building
+- [ ] Custom domain `kindredreserve.com.au` (registered, not yet wired)
+- [ ] Per-building info page (photos carousel + setup doc + videos)
+- [ ] Farm guides page (eucalyptus oil, nesting boxes, night vision)
 - [ ] Recurring bookings (Christmas, school holidays)
-- [ ] Soft auth (4-digit PIN per family) if trust breaks down
 
 ---
 
 ## Feedback log
 
-*Paste feedback from Tom + parents here as it comes in. Add dates.*
+### 2026-05-02 — Mum
+- Asked whether bookings trigger SMS notifications (currently nothing — proposed email first)
+- Wants to book non-family guests with their actual names → shipped as "Other" tile + name field
+- Public/family split: outsiders see nominated vacancies only and submit a request form; family approves in backend → planned, not yet built
+- Add a few photos → planned
+- Link Tiny Home setup/packup doc → planned
+- Camping/caravan option for guests like Uncle Andrew → shipped
+- Link Tom's videos: Tiny, eucalyptus oil, nesting boxes, night vision → planned
+- Bug: picked dates, picked a building, only learned on submit it was booked → shipped live-availability fix
+- Bug: deleted a booking then tried to edit another, screen frozen → shipped (single shared edit dialog)
+- Add a 4th tile, just call it "Other", let people type names → shipped
 
 - _(empty — send them the link)_
 

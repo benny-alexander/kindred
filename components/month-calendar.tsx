@@ -25,13 +25,13 @@ import {
   familyMeta,
   type Booking,
 } from "@/lib/bookings";
-import { BookingEditDialog } from "./booking-edit-dialog";
 
 type Props = {
   bookings: Booking[];
   selectedStart: string | null;
   selectedEnd: string | null;
   onSelect: (start: string | null, end: string | null) => void;
+  onEdit: (booking: Booking) => void;
 };
 
 type PillLayout = {
@@ -85,9 +85,9 @@ export function MonthCalendar({
   selectedStart,
   selectedEnd,
   onSelect,
+  onEdit,
 }: Props) {
   const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(new Date()));
-  const [editing, setEditing] = useState<Booking | null>(null);
 
   const monthStart = startOfMonth(visibleMonth);
   const monthEnd = endOfMonth(visibleMonth);
@@ -256,7 +256,7 @@ export function MonthCalendar({
                     key={pi}
                     onClick={(e) => {
                       e.stopPropagation();
-                      setEditing(p.booking);
+                      onEdit(p.booking);
                     }}
                     title={`${f.label} · ${b.label} · ${format(
                       parseISO(p.booking.start_date),
@@ -291,15 +291,6 @@ export function MonthCalendar({
         })}
       </div>
 
-      {editing && (
-        <BookingEditDialog
-          booking={editing}
-          open={true}
-          onOpenChange={(open) => {
-            if (!open) setEditing(null);
-          }}
-        />
-      )}
     </div>
   );
 }

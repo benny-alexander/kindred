@@ -13,18 +13,20 @@ type Props = {
   booking: Booking;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  bookings?: Booking[];
 };
 
-export function BookingEditDialog({ booking, open, onOpenChange }: Props) {
+export function BookingEditDialog({ booking, open, onOpenChange, bookings }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit booking</DialogTitle>
         </DialogHeader>
         <BookingForm
           existing={booking}
           variant="modal"
+          bookings={bookings}
           onDone={() => onOpenChange(false)}
         />
       </DialogContent>

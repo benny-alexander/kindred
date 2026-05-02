@@ -4,8 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { format, parseISO, differenceInCalendarDays } from "date-fns";
 import { toast } from "sonner";
-import { BookingEditDialog } from "./booking-edit-dialog";
-import { familyMeta, buildingMeta, type Booking } from "@/lib/bookings";
+import {
+  familyMeta,
+  buildingMeta,
+  bookingDisplayName,
+  type Booking,
+} from "@/lib/bookings";
 
 function formatRange(start: string, end: string) {
   const s = parseISO(start);
@@ -15,16 +19,21 @@ function formatRange(start: string, end: string) {
   return `${format(s, "EEE d MMM")} – ${format(e, "EEE d MMM")}`;
 }
 
-export function BookingCard({ booking }: { booking: Booking }) {
+type Props = {
+  booking: Booking;
+  onEdit: (booking: Booking) => void;
+};
+
+export function BookingCard({ booking, onEdit }: Props) {
   const router = useRouter();
-  const [editOpen, setEditOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const f = familyMeta(booking.family);
   const b = buildingMeta(booking.building);
   const nights = differenceInCalendarDays(parseISO(booking.end_date), parseISO(booking.start_date));
+  const displayName = bookingDisplayName(booking);
 
   async function handleDelete() {
-    if (!confirm(`Delete ${f.label}'s booking?`)) return;
+    if (!confirm(`Delete booking for ${displayName}?`)) return;
     setDeleting(true);
     const res = await fetch(`/api/bookings/${booking.id}`, { method: "DELETE" });
     setDeleting(false);
@@ -45,8 +54,8 @@ export function BookingCard({ booking }: { booking: Booking }) {
             {b.label}
           </div>
           <div className="flex items-center gap-2 mt-0.5">
-            <span className={`h-2.5 w-2.5 rounded-full ${f.dot}`} />
-            <span className="font-semibold text-stone-900 truncate">{f.label}</span>
+            <span className={`h-2.5 w-2.5 rounded-full ${f.dot} shrink-0`} />
+            <span className="font-semibold text-stone-900 truncate">{displayName}</span>
           </div>
         </div>
       </div>
@@ -68,16 +77,11 @@ export function BookingCard({ booking }: { booking: Booking }) {
         <div className="flex items-center gap-1 mt-4 -mx-2">
           <button
             type="button"
-            onClick={() => setEditOpen(true)}
+            onClick={() => onEdit(booking)}
             className="text-sm font-medium text-stone-600 hover:text-stone-900 px-2 py-1 rounded-md hover:bg-stone-50 transition"
           >
             Edit
           </button>
-          <BookingEditDialog
-            booking={booking}
-            open={editOpen}
-            onOpenChange={setEditOpen}
-          />
           <span className="text-stone-300">·</span>
           <button
             type="button"

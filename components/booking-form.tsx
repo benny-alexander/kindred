@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import {
   FAMILIES,
   BUILDINGS,
+  findConflict,
+  familyLabel,
   type Family,
   type Building,
   type Booking,
@@ -18,6 +20,7 @@ type Props = {
   initialStart?: string | null;
   initialEnd?: string | null;
   onAfterSubmit?: () => void;
+  bookings?: Booking[];
 };
 
 export function BookingForm({
@@ -27,12 +30,14 @@ export function BookingForm({
   initialStart,
   initialEnd,
   onAfterSubmit,
+  bookings = [],
 }: Props) {
   const router = useRouter();
   const [family, setFamily] = useState<Family | "">(existing?.family ?? "");
   const [building, setBuilding] = useState<Building | "">(existing?.building ?? "");
   const [startDate, setStartDate] = useState(existing?.start_date ?? initialStart ?? "");
   const [endDate, setEndDate] = useState(existing?.end_date ?? initialEnd ?? "");
+  const [staying, setStaying] = useState(existing?.staying ?? "");
   const [notes, setNotes] = useState(existing?.notes ?? "");
   const [submitting, setSubmitting] = useState(false);
 
@@ -42,7 +47,17 @@ export function BookingForm({
     if (initialEnd !== undefined) setEndDate(initialEnd ?? "");
   }, [existing, initialStart, initialEnd]);
 
-  const canSubmit = family && building && startDate && endDate && !submitting;
+  const datesPicked = Boolean(startDate && endDate);
+  const stayingRequired = family === "other";
+  const stayingOk = !stayingRequired || staying.trim().length > 0;
+
+  const selectedConflict =
+    building && datesPicked
+      ? findConflict(bookings, building, startDate, endDate, existing?.id)
+      : null;
+
+  const canSubmit =
+    family && building && datesPicked && stayingOk && !selectedConflict && !submitting;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -56,7 +71,14 @@ export function BookingForm({
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ family, building, start_date: startDate, end_date: endDate, notes }),
+      body: JSON.stringify({
+        family,
+        building,
+        start_date: startDate,
+        end_date: endDate,
+        notes,
+        staying: staying.trim() || null,
+      }),
     });
 
     const json = await res.json();
@@ -73,11 +95,12 @@ export function BookingForm({
       setBuilding("");
       setStartDate("");
       setEndDate("");
+      setStaying("");
       setNotes("");
       onAfterSubmit?.();
     }
-    router.refresh();
     onDone?.();
+    router.refresh();
   }
 
   return (
@@ -86,7 +109,7 @@ export function BookingForm({
         <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wide mb-3">
           Who's staying
         </h3>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {FAMILIES.map((f) => {
             const active = family === f.value;
             return (
@@ -106,50 +129,38 @@ export function BookingForm({
             );
           })}
         </div>
-      </section>
 
-      <section>
-        <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wide mb-3">
-          Where
-        </h3>
-        <div className="space-y-2">
-          {BUILDINGS.map((b) => {
-            const active = building === b.value;
-            return (
-              <button
-                type="button"
-                key={b.value}
-                onClick={() => setBuilding(b.value)}
-                className={`w-full rounded-2xl py-4 px-5 text-left transition border-2 flex items-center gap-4 bg-gradient-to-br ${b.gradient} ${
-                  active ? "border-stone-900 shadow-sm" : "border-transparent hover:border-stone-300"
-                }`}
-              >
-                <div className="text-3xl">{b.emoji}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-stone-900">{b.label}</div>
-                  <div className="text-sm text-stone-600">{b.blurb}</div>
-                  <div className="text-xs text-stone-600 mt-1.5 leading-snug">
-                    🛏 {b.beds}
-                  </div>
-                  <div className="text-xs text-stone-600 leading-snug">
-                    🚿 {b.bathroom}
-                  </div>
-                </div>
-                <div
-                  className={`h-5 w-5 rounded-full border-2 transition ${
-                    active ? "bg-stone-900 border-stone-900" : "border-stone-300"
-                  }`}
-                >
-                  {active && (
-                    <svg viewBox="0 0 20 20" fill="white" className="h-full w-full p-0.5">
-                      <path d="M7.629 14.571L3.4 10.342l1.414-1.414 2.815 2.815 7.571-7.571 1.414 1.414z" />
-                    </svg>
-                  )}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+        {family === "other" && (
+          <label className="block mt-3">
+            <div className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-1.5">
+              Name(s)
+            </div>
+            <input
+              type="text"
+              value={staying}
+              onChange={(e) => setStaying(e.target.value)}
+              placeholder="e.g. Uncle Andrew & Rachel"
+              className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-base text-stone-900 outline-none focus:border-stone-400 placeholder:text-stone-400"
+              autoFocus={variant === "modal" ? false : true}
+            />
+          </label>
+        )}
+
+        {family && family !== "other" && (
+          <label className="block mt-3">
+            <div className="text-xs font-semibold text-stone-500 uppercase tracking-wide mb-1.5">
+              Anyone else with you?{" "}
+              <span className="font-normal text-stone-400 normal-case tracking-normal">Optional</span>
+            </div>
+            <input
+              type="text"
+              value={staying}
+              onChange={(e) => setStaying(e.target.value)}
+              placeholder="e.g. + Granny, + Uncle Andrew"
+              className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-base text-stone-900 outline-none focus:border-stone-400 placeholder:text-stone-400"
+            />
+          </label>
+        )}
       </section>
 
       <section>
@@ -176,6 +187,74 @@ export function BookingForm({
               className="mt-1 w-full bg-transparent text-base font-medium text-stone-900 outline-none"
             />
           </label>
+        </div>
+        {!datesPicked && (
+          <p className="text-xs text-stone-400 mt-2">
+            Pick your dates to see what&apos;s free.
+          </p>
+        )}
+      </section>
+
+      <section>
+        <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wide mb-3">
+          Where
+        </h3>
+        <div className="space-y-2">
+          {BUILDINGS.map((b) => {
+            const active = building === b.value;
+            const conflict = datesPicked
+              ? findConflict(bookings, b.value, startDate, endDate, existing?.id)
+              : null;
+            const taken = Boolean(conflict);
+            return (
+              <button
+                type="button"
+                key={b.value}
+                onClick={() => !taken && setBuilding(b.value)}
+                disabled={taken}
+                aria-disabled={taken}
+                className={`w-full rounded-2xl py-4 px-5 text-left transition border-2 flex items-center gap-4 bg-gradient-to-br ${b.gradient} ${
+                  active ? "border-stone-900 shadow-sm" : "border-transparent hover:border-stone-300"
+                } ${taken ? "opacity-50 cursor-not-allowed grayscale-[0.4]" : ""}`}
+              >
+                <div className="text-3xl">{b.emoji}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="font-semibold text-stone-900">{b.label}</div>
+                    {datesPicked && (
+                      taken ? (
+                        <span className="inline-flex items-center text-[10px] font-semibold uppercase tracking-wide bg-red-100 text-red-700 rounded-full px-2 py-0.5">
+                          Booked · {familyLabel(conflict!.family)}
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center text-[10px] font-semibold uppercase tracking-wide bg-emerald-100 text-emerald-700 rounded-full px-2 py-0.5">
+                          Free
+                        </span>
+                      )
+                    )}
+                  </div>
+                  <div className="text-sm text-stone-600">{b.blurb}</div>
+                  <div className="text-xs text-stone-600 mt-1.5 leading-snug">
+                    🛏 {b.beds}
+                  </div>
+                  <div className="text-xs text-stone-600 leading-snug">
+                    🚿 {b.bathroom}
+                  </div>
+                </div>
+                <div
+                  className={`h-5 w-5 rounded-full border-2 transition ${
+                    active ? "bg-stone-900 border-stone-900" : "border-stone-300"
+                  }`}
+                >
+                  {active && (
+                    <svg viewBox="0 0 20 20" fill="white" className="h-full w-full p-0.5">
+                      <path d="M7.629 14.571L3.4 10.342l1.414-1.414 2.815 2.815 7.571-7.571 1.414 1.414z" />
+                    </svg>
+                  )}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </section>
 
